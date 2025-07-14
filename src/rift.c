@@ -5,7 +5,6 @@
 #include <bootstrap.h>
 
 #include <lauxlib.h>
-#include <lua.h>
 #include <lualib.h>
 
 #define RIFT_SERVICE_NAME "com.acsandmann.rift"
@@ -13,7 +12,7 @@
 
 typedef struct {
     mach_port_t port;
-} rift_client_t;
+} rift_t;
 
 static mach_port_t rift_connect_internal() {
     mach_port_t bootstrap_port;
@@ -128,7 +127,7 @@ static int l_rift_connect(lua_State *L) {
         return 2;
     }
 
-    rift_client_t *client = (rift_client_t*)lua_newuserdata(L, sizeof(rift_client_t));
+    rift_t *client = (rift_t*)lua_newuserdata(L, sizeof(rift_t));
     client->port = port;
 
     luaL_newmetatable(L, "rift.client");
@@ -138,7 +137,7 @@ static int l_rift_connect(lua_State *L) {
 }
 
 static int l_rift_send_request(lua_State *L) {
-    rift_client_t *client = (rift_client_t*)luaL_checkudata(L, 1, "rift.client");
+    rift_t *client = (rift_t*)luaL_checkudata(L, 1, "rift.client");
     const char *request_json = luaL_checkstring(L, 2);
     bool await_response = true;
     if (lua_gettop(L) >= 3) {
@@ -162,28 +161,28 @@ static int l_rift_send_request(lua_State *L) {
 }
 
 static int l_rift_disconnect(lua_State *L) {
-    rift_client_t *client = (rift_client_t*)luaL_checkudata(L, 1, "rift.client");
+    rift_t *client = (rift_t*)luaL_checkudata(L, 1, "rift.client");
     rift_disconnect_internal(client->port);
     client->port = MACH_PORT_NULL; // Mark as disconnected
     return 0;
 }
 
 static int l_rift_gc(lua_State *L) {
-    rift_client_t *client = (rift_client_t*)luaL_checkudata(L, 1, "rift.client");
+    rift_t *client = (rift_t*)luaL_checkudata(L, 1, "rift.client");
     if (client->port != MACH_PORT_NULL) rift_disconnect_internal(client->port);
     return 0;
 }
 
 
-static const struct luaL_Reg rift_client_lib[] = {
+static const struct luaL_Reg rift_lib[] = {
     {"connect", l_rift_connect},
     {"send_request", l_rift_send_request},
     {"disconnect", l_rift_disconnect},
     {NULL, NULL}
 };
 
-int luaopen_rift_client(lua_State *L) {
-    luaL_newlib(L, rift_client_lib);
+int luaopen_rift(lua_State *L) {
+    luaL_newlib(L, rift_lib);
 
     if (luaL_newmetatable(L, "rift.client")) {
         lua_pushstring(L, "__gc");
