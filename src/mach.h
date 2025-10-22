@@ -3,7 +3,7 @@
 #include <stdlib.h>
 
 
-#define RIFT_SERVICE_NAME "com.acsandmann.rift"
+#define RIFT_SERVICE_NAME "git.acsandmann.rift"
 #define MAX_MSG_SIZE 4096
 
 typedef struct {
