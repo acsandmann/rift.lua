@@ -11,6 +11,7 @@
 #define RIFT_CB_STORE_KEY "rift.client.callback_store"
 #define RIFT_TIMER_STORE_KEY "rift.client.timer_store"
 #define RIFT_CLIENT_KEEPALIVE_KEY "rift.client.keepalive"
+#define RIFT_AUTO_PUMP_INTERVAL_SECONDS 0.01
 
 static int rift_send_event_subscription_request(lua_State *L, rift_t *client, const char *key, const char *event);
 static char* rift_extract_event_type(const char *event_json);
@@ -296,7 +297,15 @@ static bool rift_start_auto_pump(lua_State *L, rift_t *client) {
     };
 
     CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
-    ctx->timer = CFRunLoopTimerCreate(kCFAllocatorDefault, now, 0.05, 0, 0, rift_timer_callback, &timer_ctx);
+    ctx->timer = CFRunLoopTimerCreate(
+        kCFAllocatorDefault,
+        now,
+        RIFT_AUTO_PUMP_INTERVAL_SECONDS,
+        0,
+        0,
+        rift_timer_callback,
+        &timer_ctx
+    );
     if (!ctx->timer) {
         free(ctx);
         return false;

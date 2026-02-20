@@ -7,11 +7,35 @@
 
 #define RIFT_SERVICE_NAME "git.acsandmann.rift"
 #define MAX_MSG_SIZE (64 * 1024)
+#define RIFT_EVENT_PORT_QLIMIT MACH_PORT_QLIMIT_LARGE
 
 typedef struct {
     mach_port_t server_port;
     mach_port_t event_port;
 } rift_t;
+
+static bool rift_set_port_queue_limit_internal(mach_port_t port, mach_port_msgcount_t qlimit) {
+    if (port == MACH_PORT_NULL) {
+        return false;
+    }
+
+    mach_port_limits_t limits;
+    limits.mpl_qlimit = qlimit;
+    kern_return_t kr = mach_port_set_attributes(
+        mach_task_self(),
+        port,
+        MACH_PORT_LIMITS_INFO,
+        (mach_port_info_t)&limits,
+        MACH_PORT_LIMITS_INFO_COUNT
+    );
+
+    if (kr != KERN_SUCCESS) {
+        fprintf(stderr, "mach_port_set_attributes failed: %s\n", mach_error_string(kr));
+        return false;
+    }
+
+    return true;
+}
 
 static mach_port_t rift_connect_internal() {
     mach_port_t bootstrap_port;
@@ -121,6 +145,12 @@ static mach_port_t rift_allocate_reply_port_internal() {
     kern_return_t kr = mach_port_allocate(mach_task_self(), MACH_PORT_RIGHT_RECEIVE, &reply_port);
     if (kr != KERN_SUCCESS) {
         fprintf(stderr, "mach_port_allocate failed: %s\n", mach_error_string(kr));
+        return MACH_PORT_NULL;
+    }
+
+    if (!rift_set_port_queue_limit_internal(reply_port, RIFT_EVENT_PORT_QLIMIT)) {
+        mach_port_mod_refs(mach_task_self(), reply_port, MACH_PORT_RIGHT_RECEIVE, -1);
+        mach_port_deallocate(mach_task_self(), reply_port);
         return MACH_PORT_NULL;
     }
 
