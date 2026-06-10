@@ -9,6 +9,13 @@ cd rift.lua
 make
 ```
 
+The makefile uses Lua from `pkg-config` when available, checking Lua 5.5 first, otherwise it builds the bundled `lua-5.4.7`.
+
+```bash
+make LUA_PC=lua5.5        # prefer a specific Lua pkg-config module
+make USE_SYSTEM_LUA=0     # force bundled Lua
+```
+
 Outputs: `rift.lua/bin/rift.so`
 
 ## Load
