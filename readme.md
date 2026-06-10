@@ -9,11 +9,13 @@ cd rift.lua
 make
 ```
 
-The makefile uses Lua from `pkg-config` when available, checking Lua 5.5 first, otherwise it builds the bundled `lua-5.4.7`.
+The makefile uses Lua headers from `pkg-config` when available, checking Lua 5.5 first, otherwise it uses the bundled `lua-5.4.7` headers.
 
 ```bash
-make LUA_PC=lua5.5        # prefer a specific Lua pkg-config module
-make USE_SYSTEM_LUA=0     # force bundled Lua
+make LUA=/opt/homebrew/bin/lua  # match headers to a specific Lua executable
+make LUA_PC=lua5.5              # prefer a specific Lua pkg-config module for headers
+make USE_SYSTEM_LUA=0           # force bundled Lua headers
+make LINK_LUA=1                 # explicitly link Lua for non-embedded use cases
 ```
 
 Outputs: `rift.lua/bin/rift.so`
